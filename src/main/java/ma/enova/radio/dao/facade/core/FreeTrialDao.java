@@ -18,6 +18,8 @@ public interface FreeTrialDao extends AbstractRepository<FreeTrial, Long> {
     List<FreeTrial> findAppropriateFreeTrials();
 
     List<FreeTrial> findByTeacherId(Long id);
+    FreeTrial findByReference(String reference);
+
 
     FreeTrial findByDateFreeTrial(LocalDateTime date);
 
