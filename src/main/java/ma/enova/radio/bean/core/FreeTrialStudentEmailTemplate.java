@@ -1,6 +1,7 @@
 package ma.enova.radio.bean.core;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import ma.enova.radio.service.util.EmailMessage;
 import ma.enova.radio.zynerator.audit.AuditBusinessObject;
 
 import javax.persistence.*;
@@ -48,12 +49,12 @@ public class FreeTrialStudentEmailTemplate extends AuditBusinessObject {
         this.object = object;
     }
 
-    public String getCorps() {
-        return this.corps;
-    }
-
     public void setCorps(String corps) {
         this.corps = corps;
+    }
+
+    public String getCorps() {
+        return corps;
     }
 
     public String getSource() {
@@ -77,6 +78,8 @@ public class FreeTrialStudentEmailTemplate extends AuditBusinessObject {
     public int hashCode() {
         return Objects.hash(id);
     }
+
+
 
 }
 

@@ -1,4 +1,4 @@
-package ma.enova.radio.bean.core;
+package ma.enova.radio.service.util;
 
 public class EmailDetails {
     private String from;

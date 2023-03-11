@@ -1,6 +1,7 @@
 package ma.enova.radio.bean.core;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import ma.enova.radio.service.util.EmailMessage;
 import ma.enova.radio.zynerator.audit.AuditBusinessObject;
 
 import javax.persistence.*;
@@ -12,7 +13,7 @@ import java.util.Objects;
 @Table(name = "free_trial_detail")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @SequenceGenerator(name = "free_trial_detail_seq", sequenceName = "free_trial_detail_seq", allocationSize = 1, initialValue = 1)
-public class FreeTrialDetail extends AuditBusinessObject {
+public class FreeTrialDetail extends AuditBusinessObject implements EmailMessage {
 
     private Long id;
 
@@ -32,7 +33,7 @@ public class FreeTrialDetail extends AuditBusinessObject {
     private Student student;
 
     @Column(length = 500)
-    private String Reference;
+    private String reference;
 
 
     public FreeTrialDetail() {
@@ -118,11 +119,11 @@ public class FreeTrialDetail extends AuditBusinessObject {
     }
 
     public String getReference() {
-        return Reference;
+        return reference;
     }
 
     public void setReference(String reference) {
-        Reference = reference;
+        this.reference = reference;
     }
 
     @Override
@@ -138,5 +139,54 @@ public class FreeTrialDetail extends AuditBusinessObject {
         return Objects.hash(id);
     }
 
+    @Override
+    @Transient
+    public String getFrom() {
+        if (this.getFreeTrial() != null && this.getFreeTrial().getFreeTrialStudentEmailTemplate() != null)
+            return this.getFreeTrial().getFreeTrialStudentEmailTemplate().getSource();
+        return null;
+    }
+
+    @Override
+    @Transient
+    public String getObject() {
+        if (this.getFreeTrial() != null && this.getFreeTrial().getFreeTrialStudentEmailTemplate() != null)
+            return this.getFreeTrial().getFreeTrialStudentEmailTemplate().getObject();
+        return null;
+    }
+
+    @Override
+    @Transient
+    public String getCorps() {
+        if (this.getFreeTrial() != null && this.getFreeTrial().getFreeTrialStudentEmailTemplate() != null)
+            return this.getFreeTrial().getFreeTrialStudentEmailTemplate().getCorps();
+        return null;
+    }
+
+    @Override
+    @Transient
+    public String getTo() {
+        if (student != null)
+            return student.getEmail();
+        return null;
+    }
+
+    @Override
+    @Transient
+    public String getCc() {
+        return null;
+    }
+
+    @Override
+    @Transient
+    public void setEmailSent(boolean emailSent) {
+        this.emailMessageSent = emailSent;
+    }
+
+    @Override
+    @Transient
+    public void setSendingDate(LocalDateTime sendingDate) {
+        this.dateEnvoiEmailMessage = sendingDate;
+    }
 }
 

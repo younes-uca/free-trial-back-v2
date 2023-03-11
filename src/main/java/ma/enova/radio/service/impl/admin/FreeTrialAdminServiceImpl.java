@@ -1,15 +1,16 @@
 package ma.enova.radio.service.impl.admin;
 
-import ma.enova.radio.bean.core.EmailDetails;
 import ma.enova.radio.bean.core.FreeTrial;
 import ma.enova.radio.bean.core.FreeTrialDetail;
 import ma.enova.radio.bean.history.FreeTrialHistory;
+import ma.enova.radio.constant.StatutFreeTrialConstant;
 import ma.enova.radio.dao.criteria.core.FreeTrialCriteria;
 import ma.enova.radio.dao.criteria.history.FreeTrialHistoryCriteria;
 import ma.enova.radio.dao.facade.core.FreeTrialDao;
 import ma.enova.radio.dao.facade.history.FreeTrialHistoryDao;
 import ma.enova.radio.dao.specification.core.FreeTrialSpecification;
 import ma.enova.radio.service.facade.admin.*;
+import ma.enova.radio.service.util.EmailSenderAdminService;
 import ma.enova.radio.zynerator.service.AbstractServiceImpl;
 import ma.enova.radio.zynerator.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,112 +18,64 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.mail.MessagingException;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class FreeTrialAdminServiceImpl extends AbstractServiceImpl<FreeTrial, FreeTrialHistory, FreeTrialCriteria, FreeTrialHistoryCriteria, FreeTrialDao, FreeTrialHistoryDao> implements FreeTrialAdminService {
 
+
     //    @Scheduled(cron = "0 0 * * * *") // Runs every hour
 //    @Scheduled(cron = "0 */5 * ? * *") // Runs every 5 minute
 //    @Scheduled(cron = "0 * * ? * *") // Runs every minute
-    public void sendFistReminderEmails() {
-        List<FreeTrial> freeTrials = dao.findAppropriateFreeTrials();
+    public void sendFistReminderEmails() throws MessagingException {
+        List<FreeTrial> freeTrials = dao.findAppropriateFreeTrialsByCode(StatutFreeTrialConstant.INITIALISATION_CODE + "," + StatutFreeTrialConstant.FIRST_EMAIL_SENT_RETRY_CODE);
         if (!freeTrials.isEmpty()) {
             for (FreeTrial myFreeTrial : freeTrials) {
-                handelFreeTrialEmail(myFreeTrial);
+                handelFreeTrialStudentEmails(myFreeTrial);
+                emailSenderAdminService.sendEmail(myFreeTrial);
+//        twilioWhatsAppSenderAdminService.sendWhatsAppMessage(myFreeTrial.getTeacher().getPhone(), myFreeTrial.getFreeTrialTeacherWhatsTemplate().getCorps());
+                handlFreeTrialStatut(myFreeTrial);
             }
         }
-
     }
 
-    private void handelFreeTrialEmail(FreeTrial myFreeTrial) {
-        List<FreeTrialDetail> freeTrialDetails = freeTrialDetailService.findByFreeTrialId(myFreeTrial.getId());
-        for (FreeTrialDetail myFreeTrialDetail : freeTrialDetails) {
-            handelFreeTrialDetailEmail(myFreeTrial, myFreeTrialDetail);
+    private void handlFreeTrialStatut(FreeTrial myFreeTrial) {
+        if (myFreeTrial.getFreeTrialDetails() != null) {
+            int cmp = 0;
+            for (FreeTrialDetail freeTrialDetail : myFreeTrial.getFreeTrialDetails()) {
+                if (Boolean.TRUE.equals(freeTrialDetail.getEmailMessageSent())) cmp++;
+            }
+            if (cmp == myFreeTrial.getFreeTrialDetails().size()) {
+                myFreeTrial.setStatutFreeTrial(statutFreeTrialService.findByCode(StatutFreeTrialConstant.FIRST_EMAIL_SENT_CODE));
+                myFreeTrial.setDateFreeTrialPremierRappel(DateUtil.today);
+            } else {
+                myFreeTrial.setStatutFreeTrial(statutFreeTrialService.findByCode(StatutFreeTrialConstant.FIRST_EMAIL_SENT_RETRY_CODE));
+                myFreeTrial.setDateFreeTrialPremierRappel(null);
+            }
         }
-        sendEmailsForTeacher(myFreeTrial);
-//        twilioWhatsAppSenderAdminService.sendWhatsAppMessage(myFreeTrial.getTeacher().getPhone(), myFreeTrial.getFreeTrialTeacherWhatsTemplate().getCorps());
-        myFreeTrial.setStatutFreeTrial(statutFreeTrialService.findByCode("first-email-sent"));
-        myFreeTrial.setDateFreeTrialPremierRappel(DateUtil.today);
         dao.save(myFreeTrial);
     }
 
-    private void handelFreeTrialDetailEmail(FreeTrial myFreeTrial, FreeTrialDetail myFreeTrialDetail) {
-        if (myFreeTrialDetail.getEmailMessageSent() == false) {
+    private void handelFreeTrialStudentEmails(FreeTrial myFreeTrial) throws MessagingException {
+        List<FreeTrialDetail> freeTrialDetails = freeTrialDetailService.findByFreeTrialId(myFreeTrial.getId());
+        for (FreeTrialDetail myFreeTrialDetail : freeTrialDetails) {
+            if (myFreeTrialDetail.getEmailMessageSent() == false) {
 //            LocalDateTime oneDayBeforeFreeTrialDate = myFreeTrialDetail.getFreeTrial().getDateFreeTrial().minusDays(1);
 //            if (DateUtil.compareByYearMonthAndDay(oneDayBeforeFreeTrialDate)) {
-            sendEmailsForStudent(myFreeTrialDetail);
-//            twilioWhatsAppSenderAdminService.sendWhatsAppMessage(myFreeTrialDetail.getStudent().getPhone(), myFreeTrial.getFreeTrialStudentWhatsTemplate().getCorps());
-
+                emailSenderAdminService.sendEmail(myFreeTrialDetail);
+                freeTrialDetailService.save(myFreeTrialDetail);
+//              twilioWhatsAppSenderAdminService.sendWhatsAppMessage(myFreeTrialDetail.getStudent().getPhone(), myFreeTrial.getFreeTrialStudentWhatsTemplate().getCorps());
 //            }
+            }
         }
-
     }
 
-//    @Scheduled(cron = "0 0 * * * *") // Runs every hour
-//    public void sendSecondReminderEmails() {
-//        List<FreeTrial> freeTrials = dao.findAll();
-//        if (!freeTrials.isEmpty()) {
-//            for (FreeTrial myFreeTrial : freeTrials) {
-//                if (!myFreeTrial.getStatutFreeTrial().getCode().equals("closed")) {
-//                    for (FreeTrialDetail myFreeTrialDetail : myFreeTrial.getFreeTrialDetails()) {
-//                        if (Boolean.FALSE.equals(myFreeTrialDetail.getEmailMessageSent())) {
-//                            LocalDateTime oneHourBeforeFreeTrialDate = LocalDateTime.of(LocalDate.from(myFreeTrial.getDateFreeTrial()), LocalTime.MIN).minusHours(1);
-//                            if (DateUtil.today.equals(oneHourBeforeFreeTrialDate)) {
-//                                sendEmailsForStudent(myFreeTrialDetail);
-//                            }
-//                        }
-//                        sendEmailsForTeacher(myFreeTrialDetail);
-//                        myFreeTrial.setStatutFreeTrial(statutFreeTrialService.findByCode("second-email-sent"));
-//                        myFreeTrial.setDateFreeTrialDeuxiemeRappel(DateUtil.today);
-//                        dao.save(myFreeTrial);
-//                    }
-//
-//                }
-//            }
-//        }
-//
-//    }
-
-    private void sendEmailsForTeacher(FreeTrial myFreeTrial) {
-
-        EmailDetails emailDetails = new EmailDetails();
-        emailDetails.setFrom(myFreeTrial.getFreeTrialTeacherEmailTemplate().getSource());
-        emailDetails.setTo(myFreeTrial.getTeacher().getEmail());
-        emailDetails.setObjet(myFreeTrial.getFreeTrialTeacherEmailTemplate().getObject());
-        emailDetails.setCorps(myFreeTrial.getFreeTrialTeacherEmailTemplate().getCorps());
-
-        try {
-            emailSenderAdminService.sendEmail(emailDetails);
-        } catch (Exception exception) {
-            exception.printStackTrace();
-
-        }
-
-
-    }
-
-    private void sendEmailsForStudent(FreeTrialDetail myFreeTrialDetail) {
-        EmailDetails emailDetails = new EmailDetails();
-        emailDetails.setTo(myFreeTrialDetail.getStudent().getEmail());
-        emailDetails.setObjet(myFreeTrialDetail.getFreeTrial().getFreeTrialStudentEmailTemplate().getObject());
-        emailDetails.setCorps(myFreeTrialDetail.getFreeTrial().getFreeTrialStudentEmailTemplate().getCorps());
-        emailDetails.setFrom(myFreeTrialDetail.getFreeTrial().getFreeTrialStudentEmailTemplate().getSource());
-        try {
-            emailSenderAdminService.sendEmail(emailDetails);
-            myFreeTrialDetail.setEmailMessageSent(true);
-            myFreeTrialDetail.setDateEnvoiEmailMessage(DateUtil.today);
-        } catch (Exception exception) {
-            myFreeTrialDetail.setEmailMessageSent(false);
-            myFreeTrialDetail.setDateEnvoiEmailMessage(null);
-        }
-        freeTrialDetailService.save(myFreeTrialDetail);
-    }
 
     @Override
     public List<FreeTrial> findAppropriateFreeTrial() {
-        return dao.findAppropriateFreeTrials();
+        return dao.findAppropriateFreeTrialsByCode(StatutFreeTrialConstant.INITIALISATION_CODE);
     }
 
 
@@ -288,5 +241,30 @@ public class FreeTrialAdminServiceImpl extends AbstractServiceImpl<FreeTrial, Fr
     public FreeTrialAdminServiceImpl(FreeTrialDao dao, FreeTrialHistoryDao historyDao) {
         super(dao, historyDao);
     }
+
+//    @Scheduled(cron = "0 0 * * * *") // Runs every hour
+//    public void sendSecondReminderEmails() {
+//        List<FreeTrial> freeTrials = dao.findAll();
+//        if (!freeTrials.isEmpty()) {
+//            for (FreeTrial myFreeTrial : freeTrials) {
+//                if (!myFreeTrial.getStatutFreeTrial().getCode().equals("closed")) {
+//                    for (FreeTrialDetail myFreeTrialDetail : myFreeTrial.getFreeTrialDetails()) {
+//                        if (Boolean.FALSE.equals(myFreeTrialDetail.getEmailMessageSent())) {
+//                            LocalDateTime oneHourBeforeFreeTrialDate = LocalDateTime.of(LocalDate.from(myFreeTrial.getDateFreeTrial()), LocalTime.MIN).minusHours(1);
+//                            if (DateUtil.today.equals(oneHourBeforeFreeTrialDate)) {
+//                                sendEmailsForStudent(myFreeTrialDetail);
+//                            }
+//                        }
+//                        sendEmailsForTeacher(myFreeTrialDetail);
+//                        myFreeTrial.setStatutFreeTrial(statutFreeTrialService.findByCode("second-email-sent"));
+//                        myFreeTrial.setDateFreeTrialDeuxiemeRappel(DateUtil.today);
+//                        dao.save(myFreeTrial);
+//                    }
+//
+//                }
+//            }
+//        }
+//
+//    }
 
 }

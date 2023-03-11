@@ -1,6 +1,7 @@
 package ma.enova.radio.bean.core;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import ma.enova.radio.service.util.EmailMessage;
 import ma.enova.radio.zynerator.audit.AuditBusinessObject;
 
 import javax.persistence.*;
@@ -13,7 +14,7 @@ import java.util.Objects;
 @Table(name = "free_trial")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @SequenceGenerator(name = "free_trial_seq", sequenceName = "free_trial_seq", allocationSize = 1, initialValue = 1)
-public class FreeTrial extends AuditBusinessObject {
+public class FreeTrial extends AuditBusinessObject implements EmailMessage {
 
     private Long id;
 
@@ -30,6 +31,10 @@ public class FreeTrial extends AuditBusinessObject {
     private Integer nombreStudentPresent = 0;
 
     private Teacher teacher;
+    private boolean emailTeacherSent;
+    private LocalDateTime emailTeacherSendingDate;
+    private boolean whatsTeacherSent;
+    private LocalDateTime whatsTeacherSendingDate;
 
     private Level level;
 
@@ -222,5 +227,55 @@ public class FreeTrial extends AuditBusinessObject {
         return Objects.hash(id);
     }
 
+    @Override
+    @Transient
+    public String getFrom() {
+        if (this.getFreeTrialTeacherEmailTemplate() != null)
+            return this.getFreeTrialTeacherEmailTemplate().getSource();
+        return null;
+    }
+
+    @Override
+    @Transient
+    public String getObject() {
+        if (this.getFreeTrialTeacherEmailTemplate() != null)
+            return this.getFreeTrialTeacherEmailTemplate().getObject();
+        return null;
+    }
+
+    @Override
+    @Transient
+    public String getCorps() {
+        if (this.getFreeTrialTeacherEmailTemplate() != null)
+            return this.getFreeTrialTeacherEmailTemplate().getCorps();
+        return null;
+    }
+
+    @Override
+    @Transient
+    public String getTo() {
+        if (teacher != null)
+            return teacher.getEmail();
+        return null;
+    }
+
+    @Override
+    @Transient
+    public String getCc() {
+        return null;
+    }
+
+    @Override
+    @Transient
+    public void setEmailSent(boolean emailSent) {
+        this.emailTeacherSent = emailSent;
+    }
+
+
+    @Transient
+    @Override
+    public void setSendingDate(LocalDateTime sendingDate) {
+        this.emailTeacherSendingDate = sendingDate;
+    }
 }
 
