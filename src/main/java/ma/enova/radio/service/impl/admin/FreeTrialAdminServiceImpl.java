@@ -13,19 +13,19 @@ import ma.enova.radio.service.facade.admin.*;
 import ma.enova.radio.zynerator.service.AbstractServiceImpl;
 import ma.enova.radio.zynerator.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class FreeTrialAdminServiceImpl extends AbstractServiceImpl<FreeTrial, FreeTrialHistory, FreeTrialCriteria, FreeTrialHistoryCriteria, FreeTrialDao, FreeTrialHistoryDao> implements FreeTrialAdminService {
 
-//    @Scheduled(cron = "0 0 * * * *") // Runs every hour
+    //    @Scheduled(cron = "0 0 * * * *") // Runs every hour
 //    @Scheduled(cron = "0 */5 * ? * *") // Runs every 5 minute
-    @Scheduled(cron = "0 * * ? * *") // Runs every minute
+//    @Scheduled(cron = "0 * * ? * *") // Runs every minute
     public void sendFistReminderEmails() {
         List<FreeTrial> freeTrials = dao.findAppropriateFreeTrials();
         if (!freeTrials.isEmpty()) {
@@ -42,7 +42,10 @@ public class FreeTrialAdminServiceImpl extends AbstractServiceImpl<FreeTrial, Fr
             handelFreeTrialDetailEmail(myFreeTrial, myFreeTrialDetail);
         }
         sendEmailsForTeacher(myFreeTrial);
-
+//        twilioWhatsAppSenderAdminService.sendWhatsAppMessage(myFreeTrial.getTeacher().getPhone(), myFreeTrial.getFreeTrialTeacherWhatsTemplate().getCorps());
+        myFreeTrial.setStatutFreeTrial(statutFreeTrialService.findByCode("first-email-sent"));
+        myFreeTrial.setDateFreeTrialPremierRappel(DateUtil.today);
+        dao.save(myFreeTrial);
     }
 
     private void handelFreeTrialDetailEmail(FreeTrial myFreeTrial, FreeTrialDetail myFreeTrialDetail) {
@@ -50,12 +53,11 @@ public class FreeTrialAdminServiceImpl extends AbstractServiceImpl<FreeTrial, Fr
 //            LocalDateTime oneDayBeforeFreeTrialDate = myFreeTrialDetail.getFreeTrial().getDateFreeTrial().minusDays(1);
 //            if (DateUtil.compareByYearMonthAndDay(oneDayBeforeFreeTrialDate)) {
             sendEmailsForStudent(myFreeTrialDetail);
+//            twilioWhatsAppSenderAdminService.sendWhatsAppMessage(myFreeTrialDetail.getStudent().getPhone(), myFreeTrial.getFreeTrialStudentWhatsTemplate().getCorps());
 
 //            }
         }
-        myFreeTrial.setStatutFreeTrial(statutFreeTrialService.findByCode("first-email-sent"));
-        myFreeTrial.setDateFreeTrialPremierRappel(DateUtil.today);
-        dao.save(myFreeTrial);
+
     }
 
 //    @Scheduled(cron = "0 0 * * * *") // Runs every hour
@@ -107,8 +109,6 @@ public class FreeTrialAdminServiceImpl extends AbstractServiceImpl<FreeTrial, Fr
         emailDetails.setObjet(myFreeTrialDetail.getFreeTrial().getFreeTrialStudentEmailTemplate().getObject());
         emailDetails.setCorps(myFreeTrialDetail.getFreeTrial().getFreeTrialStudentEmailTemplate().getCorps());
         emailDetails.setFrom(myFreeTrialDetail.getFreeTrial().getFreeTrialStudentEmailTemplate().getSource());
-
-
         try {
             emailSenderAdminService.sendEmail(emailDetails);
             myFreeTrialDetail.setEmailMessageSent(true);
@@ -117,6 +117,7 @@ public class FreeTrialAdminServiceImpl extends AbstractServiceImpl<FreeTrial, Fr
             myFreeTrialDetail.setEmailMessageSent(false);
             myFreeTrialDetail.setDateEnvoiEmailMessage(null);
         }
+        freeTrialDetailService.save(myFreeTrialDetail);
     }
 
     @Override
@@ -246,6 +247,21 @@ public class FreeTrialAdminServiceImpl extends AbstractServiceImpl<FreeTrial, Fr
         super.configure(FreeTrial.class, FreeTrialHistory.class, FreeTrialHistoryCriteria.class, FreeTrialSpecification.class);
     }
 
+    @Override
+    public FreeTrial save(FreeTrial freeTrial) {
+        return dao.save(freeTrial);
+    }
+
+    @Override
+    public FreeTrial findByDateFreeTrial(LocalDateTime date) {
+        return dao.findByDateFreeTrial(date);
+    }
+
+    @Override
+    public FreeTrial findByReference(String reference) {
+        return dao.findByReference(reference);
+    }
+
     @Autowired
     private TeacherAdminService teacherService;
     @Autowired
@@ -266,6 +282,8 @@ public class FreeTrialAdminServiceImpl extends AbstractServiceImpl<FreeTrial, Fr
     private FreeTrialDetailAdminService freeTrialDetailService;
     @Autowired
     private EmailSenderAdminService emailSenderAdminService;
+    @Autowired
+    private TwilioWhatsAppSenderAdminService twilioWhatsAppSenderAdminService;
 
     public FreeTrialAdminServiceImpl(FreeTrialDao dao, FreeTrialHistoryDao historyDao) {
         super(dao, historyDao);

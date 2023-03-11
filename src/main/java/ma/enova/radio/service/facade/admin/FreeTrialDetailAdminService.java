@@ -21,4 +21,5 @@ public interface FreeTrialDetailAdminService extends IService<FreeTrialDetail, F
     int deleteByStudentId(Long id);
 
 
+    FreeTrialDetail save(FreeTrialDetail freeTrialDetail);
 }

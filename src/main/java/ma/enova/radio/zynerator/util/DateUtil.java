@@ -153,7 +153,7 @@ public class DateUtil {
     public static String dateTimeToString(final LocalDateTime date) {
         try {
             if (date != null) {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT_WITH_HOUR, Locale.ENGLISH);
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT_ENG, Locale.ENGLISH);
                 OffsetDateTime off = OffsetDateTime.of(date, ZoneOffset.UTC);
                 ZonedDateTime zoned = off.atZoneSameInstant(ZoneId.of("UTC+1"));
                 return zoned.toLocalDateTime().format(formatter);

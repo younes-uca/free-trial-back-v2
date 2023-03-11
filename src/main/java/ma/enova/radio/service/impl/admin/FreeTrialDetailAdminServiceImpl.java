@@ -21,7 +21,6 @@ import java.util.List;
 public class FreeTrialDetailAdminServiceImpl extends AbstractServiceImpl<FreeTrialDetail, FreeTrialDetailHistory, FreeTrialDetailCriteria, FreeTrialDetailHistoryCriteria, FreeTrialDetailDao,
         FreeTrialDetailHistoryDao> implements FreeTrialDetailAdminService {
 
-
     @Override
     public FreeTrialDetail sauvegarder(FreeTrialDetail freeTrialDetail) {
         FreeTrialDetail result = null;
@@ -29,8 +28,8 @@ public class FreeTrialDetailAdminServiceImpl extends AbstractServiceImpl<FreeTri
         if (foundedFreeTrialDetail == null) {
             FreeTrial foundedFreeTrial = freeTrialDetail.getFreeTrial();
             freeTrialDetail.getFreeTrial().setNombreStudentTotal(foundedFreeTrial.getNombreStudentTotal() + 1);
+            freeTrialService.save(freeTrialDetail.getFreeTrial());
             FreeTrialDetail savedFreeTrialDetail = dao.save(freeTrialDetail);
-
             result = savedFreeTrialDetail;
         }
 
@@ -62,6 +61,11 @@ public class FreeTrialDetailAdminServiceImpl extends AbstractServiceImpl<FreeTri
 
     public void configure() {
         super.configure(FreeTrialDetail.class, FreeTrialDetailHistory.class, FreeTrialDetailHistoryCriteria.class, FreeTrialDetailSpecification.class);
+    }
+
+    @Override
+    public FreeTrialDetail save(FreeTrialDetail freeTrialDetail) {
+        return dao.save(freeTrialDetail);
     }
 
     @Autowired

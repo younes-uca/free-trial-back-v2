@@ -5,6 +5,7 @@ import ma.enova.radio.dao.criteria.core.FreeTrialCriteria;
 import ma.enova.radio.dao.criteria.history.FreeTrialHistoryCriteria;
 import ma.enova.radio.zynerator.service.IService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -12,7 +13,10 @@ public interface FreeTrialAdminService extends IService<FreeTrial, FreeTrialCrit
 
     List<FreeTrial> findAppropriateFreeTrial();
 
+    FreeTrial save(FreeTrial freeTrial);
 
+    FreeTrial findByDateFreeTrial(LocalDateTime date);
+    FreeTrial findByReference(String reference);
     List<FreeTrial> findByTeacherId(Long id);
 
     int deleteByTeacherId(Long id);

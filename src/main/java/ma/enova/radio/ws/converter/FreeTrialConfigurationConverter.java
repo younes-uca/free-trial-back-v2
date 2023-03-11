@@ -25,9 +25,9 @@ public class FreeTrialConfigurationConverter extends AbstractConverter<FreeTrial
             if (StringUtil.isNotEmpty(dto.getId()))
                 item.setId(dto.getId());
             if (StringUtil.isNotEmpty(dto.getDateApplicationDebut()))
-                item.setDateApplicationDebut(DateUtil.stringToDateTime(dto.getDateApplicationDebut()));
+                item.setDateApplicationDebut(DateUtil.stringEnToDate(dto.getDateApplicationDebut()));
             if (StringUtil.isNotEmpty(dto.getDateApplicationFin()))
-                item.setDateApplicationFin(DateUtil.stringToDateTime(dto.getDateApplicationFin()));
+                item.setDateApplicationFin(DateUtil.stringEnToDate(dto.getDateApplicationFin()));
             if (StringUtil.isNotEmpty(dto.getNombreStudentMax()))
                 item.setNombreStudentMax(dto.getNombreStudentMax());
             if (StringUtil.isNotEmpty(dto.getNombreStudentMin()))
