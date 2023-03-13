@@ -30,7 +30,7 @@ public class FreeTrialAdminServiceImpl extends AbstractServiceImpl<FreeTrial, Fr
 //    @Scheduled(cron = "0 */5 * ? * *") // Runs every 5 minute
 //    @Scheduled(cron = "0 * * ? * *") // Runs every minute
     public void sendFistReminderEmails() throws MessagingException {
-        List<FreeTrial> freeTrials = dao.findAppropriateFreeTrialsByCode(StatutFreeTrialConstant.INITIALISATION_CODE + "," + StatutFreeTrialConstant.FIRST_EMAIL_SENT_RETRY_CODE);
+        List<FreeTrial> freeTrials = dao.findAppropriateFreeTrialsByCode(new String[]{StatutFreeTrialConstant.INITIALISATION_CODE , StatutFreeTrialConstant.FIRST_EMAIL_SENT_RETRY_CODE});
         if (!freeTrials.isEmpty()) {
             for (FreeTrial myFreeTrial : freeTrials) {
                 handelFreeTrialStudentEmails(myFreeTrial);
@@ -75,7 +75,7 @@ public class FreeTrialAdminServiceImpl extends AbstractServiceImpl<FreeTrial, Fr
 
     @Override
     public List<FreeTrial> findAppropriateFreeTrial() {
-        return dao.findAppropriateFreeTrialsByCode(StatutFreeTrialConstant.INITIALISATION_CODE);
+        return dao.findAppropriateFreeTrialsByCode(new String[]{StatutFreeTrialConstant.INITIALISATION_CODE});
     }
 
 

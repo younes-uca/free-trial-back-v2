@@ -214,6 +214,38 @@ public class FreeTrial extends AuditBusinessObject implements EmailMessage {
         Reference = reference;
     }
 
+    public boolean getEmailTeacherSent() {
+        return this.emailTeacherSent;
+    }
+
+    public void setEmailTeacherSent(boolean emailTeacherSent) {
+        this.emailTeacherSent = emailTeacherSent;
+    }
+
+    public LocalDateTime getEmailTeacherSendingDate() {
+        return emailTeacherSendingDate;
+    }
+
+    public void setEmailTeacherSendingDate(LocalDateTime emailTeacherSendingDate) {
+        this.emailTeacherSendingDate = emailTeacherSendingDate;
+    }
+
+    public boolean getWhatsTeacherSent() {
+        return this.whatsTeacherSent;
+    }
+
+    public void setWhatsTeacherSent(boolean whatsTeacherSent) {
+        this.whatsTeacherSent = whatsTeacherSent;
+    }
+
+    public LocalDateTime getWhatsTeacherSendingDate() {
+        return whatsTeacherSendingDate;
+    }
+
+    public void setWhatsTeacherSendingDate(LocalDateTime whatsTeacherSendingDate) {
+        this.whatsTeacherSendingDate = whatsTeacherSendingDate;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

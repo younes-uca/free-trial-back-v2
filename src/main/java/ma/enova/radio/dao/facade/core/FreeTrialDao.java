@@ -16,7 +16,7 @@ public interface FreeTrialDao extends AbstractRepository<FreeTrial, Long> {
 
 
     @Query("SELECT item FROM FreeTrial item WHERE item.nombreStudentTotal < item.freeTrialConfiguration.nombreStudentMax AND item.statutFreeTrial.code in (:codes)")
-    List<FreeTrial> findAppropriateFreeTrialsByCode(@PathParam("codes") String codes);
+    List<FreeTrial> findAppropriateFreeTrialsByCode(@PathParam("codes") String[] codes);
 
     List<FreeTrial> findByTeacherId(Long id);
     FreeTrial findByReference(String reference);

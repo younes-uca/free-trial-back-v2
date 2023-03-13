@@ -10,6 +10,7 @@ import ma.enova.radio.service.facade.admin.StatutFreeTrialAdminService;
 import ma.enova.radio.service.util.EmailSenderAdminService;
 import ma.enova.radio.zynerator.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
@@ -22,22 +23,26 @@ public class FreeTrialFirstMailHandlingAdminServiceImpl implements FreeTrialFirs
 //    @Scheduled(cron = "0 */5 * ? * *") // Runs every 5 minute
 //    @Scheduled(cron = "0 * * ? * *") // Runs every minute
     public void sendFistReminderEmails() throws MessagingException {
-        List<FreeTrial> freeTrials = dao.findAppropriateFreeTrialsByCode(StatutFreeTrialConstant.INITIALISATION_CODE + "," + StatutFreeTrialConstant.FIRST_EMAIL_SENT_RETRY_CODE);
+        List<FreeTrial> freeTrials = dao.findAppropriateFreeTrialsByCode(new String[]{StatutFreeTrialConstant.INITIALISATION_CODE , StatutFreeTrialConstant.FIRST_EMAIL_SENT_RETRY_CODE});
         if (!freeTrials.isEmpty()) {
             for (FreeTrial myFreeTrial : freeTrials) {
                 handelFreeTrialStudentEmails(myFreeTrial);
-                emailSenderAdminService.sendEmail(myFreeTrial);
+                handlFreeTrialTeacherEmail(myFreeTrial);
 //        twilioWhatsAppSenderAdminService.sendWhatsAppMessage(myFreeTrial.getTeacher().getPhone(), myFreeTrial.getFreeTrialTeacherWhatsTemplate().getCorps());
                 handlFreeTrialStatut(myFreeTrial);
             }
         }
     }
 
+    private void handlFreeTrialTeacherEmail(FreeTrial myFreeTrial) throws MessagingException {
+        if (Boolean.FALSE.equals(myFreeTrial.getEmailTeacherSent())) emailSenderAdminService.sendEmail(myFreeTrial);
+    }
+
     private void handlFreeTrialStatut(FreeTrial myFreeTrial) {
         if (myFreeTrial.getFreeTrialDetails() != null) {
             int cmp = 0;
             for (FreeTrialDetail freeTrialDetail : myFreeTrial.getFreeTrialDetails()) {
-                if (Boolean.TRUE.equals(freeTrialDetail.getFreeTrial())) cmp++;
+                if (Boolean.TRUE.equals(freeTrialDetail.getEmailMessageSent())) cmp++;
             }
             if (cmp == myFreeTrial.getFreeTrialDetails().size()) {
                 myFreeTrial.setStatutFreeTrial(statutFreeTrialService.findByCode(StatutFreeTrialConstant.FIRST_EMAIL_SENT_CODE));
@@ -52,8 +57,9 @@ public class FreeTrialFirstMailHandlingAdminServiceImpl implements FreeTrialFirs
 
     private void handelFreeTrialStudentEmails(FreeTrial myFreeTrial) throws MessagingException {
         List<FreeTrialDetail> freeTrialDetails = freeTrialDetailService.findByFreeTrialId(myFreeTrial.getId());
+        myFreeTrial.setFreeTrialDetails(freeTrialDetails);
         for (FreeTrialDetail myFreeTrialDetail : freeTrialDetails) {
-            if (myFreeTrialDetail.getEmailMessageSent() == false) {
+            if (Boolean.FALSE.equals(myFreeTrialDetail.getEmailMessageSent())) {
 //            LocalDateTime oneDayBeforeFreeTrialDate = myFreeTrialDetail.getFreeTrial().getDateFreeTrial().minusDays(1);
 //            if (DateUtil.compareByYearMonthAndDay(oneDayBeforeFreeTrialDate)) {
                 emailSenderAdminService.sendEmail(myFreeTrialDetail);
