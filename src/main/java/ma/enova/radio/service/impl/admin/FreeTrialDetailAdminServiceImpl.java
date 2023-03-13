@@ -27,12 +27,11 @@ public class FreeTrialDetailAdminServiceImpl extends AbstractServiceImpl<FreeTri
         FreeTrialDetail foundedFreeTrialDetail = findByReference(freeTrialDetail.getReference());
         if (foundedFreeTrialDetail == null) {
             FreeTrial foundedFreeTrial = freeTrialDetail.getFreeTrial();
-            freeTrialDetail.getFreeTrial().setNombreStudentTotal(foundedFreeTrial.getNombreStudentTotal() + 1);
-            freeTrialService.save(freeTrialDetail.getFreeTrial());
+            foundedFreeTrial.setNombreStudentTotal(foundedFreeTrial.getNombreStudentTotal() + 1);
+            freeTrialService.save(foundedFreeTrial);
             FreeTrialDetail savedFreeTrialDetail = dao.save(freeTrialDetail);
             result = savedFreeTrialDetail;
         }
-
         return result;
     }
 
